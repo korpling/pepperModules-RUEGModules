@@ -95,15 +95,12 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 	 * corpus to system.out. This is not very useful, but might be a good
 	 * starting point to explain how access the several objects in Salt model.
 	 */
-	public static class Mapper extends PepperMapperImpl implements GraphTraverseHandler {
+	public static class Mapper extends PepperMapperImpl {
 		/**
 		 * Creates meta annotations, if not already exists
 		 */
 		@Override
-		public DOCUMENT_STATUS mapSCorpus() {
-			if (getCorpus().getMetaAnnotation("date") == null) {
-				getCorpus().createMetaAnnotation(null, "date", "1989-12-17");
-			}
+		public DOCUMENT_STATUS mapSCorpus() {			
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
@@ -112,110 +109,11 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 		 */
 		@Override
 		public DOCUMENT_STATUS mapSDocument() {
-			// create a StringBuilder, to be filled with informations (we need
-			// to intermediately store the results, because of parallelism of
-			// modules)
-			String format = "|%-15s: %15s |%n";
-			StringBuilder out = new StringBuilder();
-			out.append("\n");
-			// print out the id of the document
-			out.append(getDocument().getId());
-			out.append("\n");
-			out.append("+---------------------------------+\n");
-			// print out the general number of nodes
-			out.append(String.format(format, "nodes", getDocument().getDocumentGraph().getNodes().size()));
-			addProgress((double) (1 / 7));
-			// print out the general number of relations
-			out.append(String.format(format, "relations", getDocument().getDocumentGraph().getRelations().size()));
-			addProgress((double) (1 / 7));
-			// print out the general number of primary texts
-			out.append(String.format(format, "texts", getDocument().getDocumentGraph().getTextualDSs().size()));
-			addProgress((double) (1 / 7));
-			// print out the general number of tokens
-			out.append(String.format(format, "tokens", getDocument().getDocumentGraph().getTokens().size()));
-			addProgress((double) (1 / 7));
-			// print out the general number of spans
-			out.append(String.format(format, "spans", getDocument().getDocumentGraph().getSpans().size()));
-			addProgress((double) (1 / 7));
-			// print out the general number of structures
-			out.append(String.format(format, "structures", getDocument().getDocumentGraph().getStructures().size()));
-			addProgress((double) (1 / 7));
-
-			// create alist of all root nodes of the current document-structure
-			List<SNode> roots = getDocument().getDocumentGraph().getRoots();
-			// traverse the document-structure beginning at the roots in
-			// depth-first order top down. The id 'RUEGTraversal' is used for
-			// uniqueness, in case of one class uses multiple traversals. This
-			// object then takes the call-backs implemented with methods
-			// checkConstraint, nodeReached and nodeLeft
-			getDocument().getDocumentGraph().traverse(roots, GRAPH_TRAVERSE_TYPE.TOP_DOWN_DEPTH_FIRST, "RUEGTraversal", this);
-
-			// print out computed frequencies
-			for (Map.Entry<String, Integer> entry : frequencies.entrySet()) {
-				out.append(String.format(format, entry.getKey(), entry.getValue()));
-			}
-			addProgress((double) (1 / 7));
-			out.append("+---------------------------------+\n");
-			System.out.println(out.toString());
+			
 
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
-		/** A map storing frequencies of annotations of processed documents. */
-		private Map<String, Integer> frequencies = new Hashtable<String, Integer>();
-
-		/**
-		 * This method is called for each node in document-structure, as long as
-		 * {@link #checkConstraint(GRAPH_TRAVERSE_TYPE, String, SRelation, SNode, long)}
-		 * returns true for this node. <br/>
-		 * In our dummy implementation it just collects frequencies of
-		 * annotations.
-		 */
-		@Override
-		public void nodeReached(GRAPH_TRAVERSE_TYPE traversalType, String traversalId, SNode currNode, SRelation sRelation, SNode fromNode, long order) {
-			if (currNode.getAnnotations().size() != 0) {
-				// step through all annotations to collect them in frequencies
-				// table
-				for (SAnnotation annotation : currNode.getAnnotations()) {
-					Integer frequence = frequencies.get(annotation.getName());
-					// if annotation hasn't been seen yet, create entry in
-					// frequencies set frequency to 0
-					if (frequence == null) {
-						frequence = 0;
-					}
-					frequence++;
-					frequencies.put(annotation.getName(), frequence);
-				}
-			}
-		}
-
-		/**
-		 * This method is called on the way back, in depth first mode it is
-		 * called for a node after all the nodes belonging to its subtree have
-		 * been visited. <br/>
-		 * In our dummy implementation, this method is not used.
-		 */
-		@Override
-		public void nodeLeft(GRAPH_TRAVERSE_TYPE traversalType, String traversalId, SNode currNode, SRelation edge, SNode fromNode, long order) {
-		}
-
-		/**
-		 * With this method you can decide if a node is supposed to be visited
-		 * by methods
-		 * {@link #nodeReached(GRAPH_TRAVERSE_TYPE, String, SNode, SRelation, SNode, long)}
-		 * and
-		 * {@link #nodeLeft(GRAPH_TRAVERSE_TYPE, String, SNode, SRelation, SNode, long)}
-		 * . In our dummy implementation for instance we do not need to visit
-		 * the nodes {@link STextualDS}.
-		 */
-		@Override
-		public boolean checkConstraint(GRAPH_TRAVERSE_TYPE traversalType, String traversalId, SRelation edge, SNode currNode, long order) {
-			if (currNode instanceof STextualDS) {
-				return (false);
-			} else {
-				return (true);
-			}
-		}
 	}
 
 	// =================================================== optional
