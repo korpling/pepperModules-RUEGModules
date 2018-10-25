@@ -38,8 +38,8 @@ import org.osgi.service.component.annotations.Component;
  * 
  * @author Thomas Krause
  */
-@Component(name = "RUEGManipulatorComponent", factory = "PepperManipulatorComponentFactory")
-public class RUEGManipulator extends PepperManipulatorImpl {
+@Component(name = "TokenizeRUEGTranscriptionComponent", factory = "PepperManipulatorComponentFactory")
+public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 	// =================================================== mandatory
 	// ===================================================
 	/**
@@ -49,7 +49,7 @@ public class RUEGManipulator extends PepperManipulatorImpl {
 	 * supported formats) are a kind of a fingerprint, which should make your
 	 * module unique.
 	 */
-	public RUEGManipulator() {
+	public TokenizeRUEGTranscription() {
 		super();
 		setName("RUEGManipulator");
 		// TODO change suppliers e-mail address
@@ -78,7 +78,7 @@ public class RUEGManipulator extends PepperManipulatorImpl {
 	 *         connected to given {@link Identifier}
 	 */
 	public PepperMapper createPepperMapper(Identifier Identifier) {
-		RUEGMapper mapper = new RUEGMapper();
+		Mapper mapper = new Mapper();
 		return (mapper);
 	}
 
@@ -95,7 +95,7 @@ public class RUEGManipulator extends PepperManipulatorImpl {
 	 * corpus to system.out. This is not very useful, but might be a good
 	 * starting point to explain how access the several objects in Salt model.
 	 */
-	public static class RUEGMapper extends PepperMapperImpl implements GraphTraverseHandler {
+	public static class Mapper extends PepperMapperImpl implements GraphTraverseHandler {
 		/**
 		 * Creates meta annotations, if not already exists
 		 */

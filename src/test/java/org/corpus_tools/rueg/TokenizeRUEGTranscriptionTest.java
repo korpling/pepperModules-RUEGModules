@@ -1,6 +1,6 @@
 package org.corpus_tools.rueg;
 
-import org.corpus_tools.rueg.RUEGManipulator;
+import org.corpus_tools.rueg.TokenizeRUEGTranscription;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -13,7 +13,7 @@ import org.junit.Test;
 
 /**
  * This is a dummy implementation of a JUnit test for testing the
- * {@link RUEGManipulator} class. Feel free to adapt and enhance this test
+ * {@link TokenizeRUEGTranscription} class. Feel free to adapt and enhance this test
  * class for real tests to check the work of your manipulator. If you are not
  * confirm with JUnit, please have a look at <a
  * href="http://www.vogella.com/tutorials/JUnit/article.html">
@@ -25,7 +25,7 @@ import org.junit.Test;
  * 
  * @author Thomas Krause
  */
-public class RUEGManipulatorTest extends PepperManipulatorTest {
+public class TokenizeRUEGTranscriptionTest extends PepperManipulatorTest {
 	/**
 	 * This method is called by the JUnit environment each time before a test
 	 * case starts. So each time a method annotated with @Test is called. This
@@ -34,7 +34,7 @@ public class RUEGManipulatorTest extends PepperManipulatorTest {
 	 */
 	@Before
 	public void setUp() {
-		setFixture(new RUEGManipulator());
+		setFixture(new TokenizeRUEGTranscription());
 	}
 
 	/**
