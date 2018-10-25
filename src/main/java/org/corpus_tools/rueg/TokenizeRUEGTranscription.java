@@ -3,6 +3,7 @@ package org.corpus_tools.rueg;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.common.PepperConfiguration;
@@ -130,14 +131,15 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 					// the same base text)
 					List<DataSourceSequence<Integer>> tokenizedUtterance = this.tokenize(utteranceSeqList.get(0));
 
-					// TODO add token and connect them with a newly created span
-					List<SToken> tokensForUtterance = new ArrayList<>();
+					// add token and connect them with a newly created span
+					TreeMap<Integer, SToken> sortedTokenForUtterance = new TreeMap<>();
 					for (DataSourceSequence tokenSeq : tokenizedUtterance) {
 						SToken newToken = g.createToken(tokenSeq);
-						tokensForUtterance.add(newToken);
+						sortedTokenForUtterance.put(tokenSeq.getStart().intValue(), newToken);
 					}
+					List<SToken> tokenForUtterance = new ArrayList<>(sortedTokenForUtterance.values());
 
-					SSpan utteranceSpan = g.createSpan(tokensForUtterance);
+					SSpan utteranceSpan = g.createSpan(tokenForUtterance);
 					if (utteranceSpan != null) {
 						// add original token value as annotation value
 						utteranceSpan.createAnnotation("rueg", "cu", g.getText(utteranceToken));
@@ -156,7 +158,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 								// get text length of all new nodes: tokenization can remove characters
 								double newTextLength = 0.0;
-								for (SToken tok : tokensForUtterance) {
+								for (SToken tok : tokenForUtterance) {
 									newTextLength += (double) g.getText(tok).length();
 								}
 								if (newTextLength == 0.0) {
@@ -164,8 +166,8 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 									newTextLength = 0.00001;
 								}
 
-								for (int i = 0; i < tokensForUtterance.size(); i++) {
-									SToken tok = tokensForUtterance.get(i);
+								for (int i = 0; i < tokenForUtterance.size(); i++) {
+									SToken tok = tokenForUtterance.get(i);
 									double newTokTextLength = (double) g.getText(tok).length();
 									double newTokMediaLength = (newTokTextLength / newTextLength) * oldMediaLength;
 
@@ -173,7 +175,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 									newTokMediaRel.setSource(tok);
 									newTokMediaRel.setTarget(mediaRel.getTarget());
 									newTokMediaRel.setStart(currentStart);
-									if (i < tokensForUtterance.size() - 1) {
+									if (i < tokenForUtterance.size() - 1) {
 										newTokMediaRel.setEnd(currentStart + newTokMediaLength);
 									} else {
 										// assign all remaining time to the lasts token to avoid any missing time due to
