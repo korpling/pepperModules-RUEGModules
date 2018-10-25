@@ -114,6 +114,11 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 			SDocumentGraph g = getDocument().getDocumentGraph();
 			
+			// rename the speaker to "dipl"
+			if(!g.getTextualDSs().isEmpty()) {
+				g.getTextualDSs().get(0).setName("dipl");
+			}
+			
 			List<SToken> originalToken = new LinkedList<>(g.getTokens());
 			for (SToken utteranceToken : originalToken) {
 
