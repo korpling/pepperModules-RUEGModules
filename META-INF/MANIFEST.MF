@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1540479060977
+Bnd-LastModified: 1540487582740
 Build-Jdk: 1.8.0_181
 Built-By: thomas
 Bundle-Description: Provides shared POM-data.
@@ -14,14 +14,15 @@ Bundle-Version: 1.0.0.SNAPSHOT
 Created-By: Apache Maven Bundle Plugin
 Export-Package: org.corpus_tools.rueg;uses:="org.corpus_tools.pepper.com
  mon,org.corpus_tools.pepper.impl,org.corpus_tools.pepper.modules,org.co
- rpus_tools.pepper.modules.exceptions,org.corpus_tools.salt.core,org.cor
- pus_tools.salt.graph";version="1.0.0.SNAPSHOT"
+ rpus_tools.pepper.modules.exceptions,org.corpus_tools.salt.graph";versi
+ on="1.0.0.SNAPSHOT"
 Import-Package: org.corpus_tools.pepper.common;version="[3.2,4)",org.cor
  pus_tools.pepper.impl;version="[3.2,4)",org.corpus_tools.pepper.modules
  ;version="[3.2,4)",org.corpus_tools.pepper.modules.exceptions;version="
- [3.2,4)",org.corpus_tools.salt.common;version="[3.3,4)",org.corpus_tool
- s.salt.core;version="[3.3,4)",org.corpus_tools.salt.graph;version="[3.3
- ,4)",org.eclipse.emf.common.util
+ [3.2,4)",org.corpus_tools.salt;version="[3.3,4)",org.corpus_tools.salt.
+ common;version="[3.3,4)",org.corpus_tools.salt.core;version="[3.3,4)",o
+ rg.corpus_tools.salt.graph;version="[3.3,4)",org.corpus_tools.salt.util
+ ;version="[3.3,4)",org.eclipse.emf.common.util
 META-INF: /home/thomas/src/pepperModules/RUEGModules/META-INF
 OSGI-INF: OSGI-INF
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.7))"

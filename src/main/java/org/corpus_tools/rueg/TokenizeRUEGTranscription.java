@@ -1,8 +1,8 @@
 package org.corpus_tools.rueg;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.common.PepperConfiguration;
@@ -13,15 +13,19 @@ import org.corpus_tools.pepper.modules.PepperMapper;
 import org.corpus_tools.pepper.modules.PepperModule;
 import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleNotReadyException;
+import org.corpus_tools.salt.SALT_TYPE;
+import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SCorpus;
 import org.corpus_tools.salt.common.SDocument;
+import org.corpus_tools.salt.common.SDocumentGraph;
+import org.corpus_tools.salt.common.SMedialRelation;
+import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
-import org.corpus_tools.salt.core.GraphTraverseHandler;
-import org.corpus_tools.salt.core.SAnnotation;
-import org.corpus_tools.salt.core.SGraph.GRAPH_TRAVERSE_TYPE;
-import org.corpus_tools.salt.core.SNode;
+import org.corpus_tools.salt.common.STimelineRelation;
+import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SRelation;
 import org.corpus_tools.salt.graph.Identifier;
+import org.corpus_tools.salt.util.DataSourceSequence;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
 
@@ -30,8 +34,8 @@ import org.osgi.service.component.annotations.Component;
  * Therefore it just prints out some information about a corpus like the number
  * of nodes, edges and for instance annotation frequencies. <br/>
  * This class can be used as a template for an own implementation of a
- * {@link PepperManipulator} Take a look at the TODO's and adapt the code.
- * If this is the first time, you are implementing a Pepper module, we strongly
+ * {@link PepperManipulator} Take a look at the TODO's and adapt the code. If
+ * this is the first time, you are implementing a Pepper module, we strongly
  * recommend, to take a look into the 'Developer's Guide for Pepper modules',
  * you will find on
  * <a href="http://corpus-tools.org/pepper/">http://corpus-tools.org/pepper</a>.
@@ -44,14 +48,13 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 	// ===================================================
 	/**
 	 * <strong>OVERRIDE THIS METHOD FOR CUSTOMIZATION</strong> <br/>
-	 * A constructor for your module. Set the coordinates, with which your
-	 * module shall be registered. The coordinates (modules name, version and
-	 * supported formats) are a kind of a fingerprint, which should make your
-	 * module unique.
+	 * A constructor for your module. Set the coordinates, with which your module
+	 * shall be registered. The coordinates (modules name, version and supported
+	 * formats) are a kind of a fingerprint, which should make your module unique.
 	 */
 	public TokenizeRUEGTranscription() {
 		super();
-		setName("RUEGManipulator");
+		setName("TokenizeRUEGTranscription");
 		// TODO change suppliers e-mail address
 		setSupplierContact(URI.createURI(PepperConfiguration.EMAIL));
 		// TODO change suppliers homepage
@@ -62,18 +65,17 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 	/**
 	 * <strong>OVERRIDE THIS METHOD FOR CUSTOMIZATION</strong> <br/>
-	 * This method creates a customized {@link PepperMapper} object and returns
-	 * it. You can here do some additional initialisations. Thinks like setting
-	 * the {@link Identifier} of the {@link SDocument} or {@link SCorpus} object
-	 * and the {@link URI} resource is done by the framework (or more in detail
-	 * in method {@link #start()}). The parameter <code>Identifier</code>, if a
-	 * {@link PepperMapper} object should be created in case of the object to
-	 * map is either an {@link SDocument} object or an {@link SCorpus} object of
-	 * the mapper should be initialized differently. <br/>
+	 * This method creates a customized {@link PepperMapper} object and returns it.
+	 * You can here do some additional initialisations. Thinks like setting the
+	 * {@link Identifier} of the {@link SDocument} or {@link SCorpus} object and the
+	 * {@link URI} resource is done by the framework (or more in detail in method
+	 * {@link #start()}). The parameter <code>Identifier</code>, if a
+	 * {@link PepperMapper} object should be created in case of the object to map is
+	 * either an {@link SDocument} object or an {@link SCorpus} object of the mapper
+	 * should be initialized differently. <br/>
 	 * 
-	 * @param Identifier
-	 *            {@link Identifier} of the {@link SCorpus} or {@link SDocument}
-	 *            to be processed.
+	 * @param Identifier {@link Identifier} of the {@link SCorpus} or
+	 *                   {@link SDocument} to be processed.
 	 * @return {@link PepperMapper} object to do the mapping task for object
 	 *         connected to given {@link Identifier}
 	 */
@@ -84,23 +86,23 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 	/**
 	 * This class is a dummy implementation for a mapper, to show how it works.
-	 * Pepper or more specific this dummy implementation of a Pepper module
-	 * creates one mapper object per {@link SDocument} object and
-	 * {@link SCorpus} object each. This ensures, that each of those objects is
-	 * run independently from another and runs parallelized. <br/>
-	 * The method {@link #mapSCorpus()} is supposed to handle all
-	 * {@link SCorpus} object and the method {@link #mapSDocument()} is supposed
-	 * to handle all {@link SDocument} objects. <br/>
+	 * Pepper or more specific this dummy implementation of a Pepper module creates
+	 * one mapper object per {@link SDocument} object and {@link SCorpus} object
+	 * each. This ensures, that each of those objects is run independently from
+	 * another and runs parallelized. <br/>
+	 * The method {@link #mapSCorpus()} is supposed to handle all {@link SCorpus}
+	 * object and the method {@link #mapSDocument()} is supposed to handle all
+	 * {@link SDocument} objects. <br/>
 	 * In our dummy implementation, we just print out some information about a
-	 * corpus to system.out. This is not very useful, but might be a good
-	 * starting point to explain how access the several objects in Salt model.
+	 * corpus to system.out. This is not very useful, but might be a good starting
+	 * point to explain how access the several objects in Salt model.
 	 */
 	public static class Mapper extends PepperMapperImpl {
 		/**
 		 * Creates meta annotations, if not already exists
 		 */
 		@Override
-		public DOCUMENT_STATUS mapSCorpus() {			
+		public DOCUMENT_STATUS mapSCorpus() {
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
@@ -109,9 +111,111 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 		 */
 		@Override
 		public DOCUMENT_STATUS mapSDocument() {
+
+			SDocumentGraph g = getDocument().getDocumentGraph();
 			
+			List<SToken> originalToken = new LinkedList<>(g.getTokens());
+			for (SToken utteranceToken : originalToken) {
+
+				List<DataSourceSequence> utteranceSeqList = g.getOverlappedDataSourceSequence(utteranceToken,
+						SALT_TYPE.STEXT_OVERLAPPING_RELATION);
+
+				if (!utteranceSeqList.isEmpty()) {
+					// tokenize the token value (by getting new indexes for the token based on
+					// the same base text)
+					List<DataSourceSequence<Integer>> tokenizedUtterance = this.tokenize(utteranceSeqList.get(0));
+
+					// TODO add token and connect them with a newly created span
+					List<SToken> tokensForUtterance = new ArrayList<>();
+					for (DataSourceSequence tokenSeq : tokenizedUtterance) {
+						SToken newToken = g.createToken(tokenSeq);
+						tokensForUtterance.add(newToken);
+					}
+
+					SSpan utteranceSpan = g.createSpan(tokensForUtterance);
+					if (utteranceSpan != null) {
+						// add original token value as annotation value
+						utteranceSpan.createAnnotation("rueg", "cu", g.getText(utteranceToken));
+
+						// align the new tokens with the audio file (using interpolation)
+						for (SRelation out : utteranceToken.getOutRelations()) {
+							if (out instanceof SMedialRelation) {
+								SMedialRelation mediaRel = (SMedialRelation) out;
+								// Don't copy the media relation, but use an interpolation based on the text
+								// length to add media
+								// relations to the new tokens. Overlapped tokens should be sorted by their text
+								// order.
+								final double oldMediaLength = mediaRel.getEnd() - mediaRel.getStart();
+
+								double currentStart = mediaRel.getStart();
+
+								// get text length of all new nodes: tokenization can remove characters
+								double newTextLength = 0.0;
+								for (SToken tok : tokensForUtterance) {
+									newTextLength += (double) g.getText(tok).length();
+								}
+								if (newTextLength == 0.0) {
+									// avoid division by zero
+									newTextLength = 0.00001;
+								}
+
+								for (int i = 0; i < tokensForUtterance.size(); i++) {
+									SToken tok = tokensForUtterance.get(i);
+									double newTokTextLength = (double) g.getText(tok).length();
+									double newTokMediaLength = (newTokTextLength / newTextLength) * oldMediaLength;
+
+									SMedialRelation newTokMediaRel = SaltFactory.createSMedialRelation();
+									newTokMediaRel.setSource(tok);
+									newTokMediaRel.setTarget(mediaRel.getTarget());
+									newTokMediaRel.setStart(currentStart);
+									if (i < tokensForUtterance.size() - 1) {
+										newTokMediaRel.setEnd(currentStart + newTokMediaLength);
+									} else {
+										// assign all remaining time to the lasts token to avoid any missing time due to
+										// fractions
+										newTokMediaRel.setEnd(mediaRel.getEnd());
+									}
+									g.addRelation(newTokMediaRel);
+
+									currentStart = currentStart + newTokMediaLength;
+								}
+							}
+						}
+					}
+
+					// remove the old token
+					g.removeNode(utteranceToken);
+				}
+			}
 
 			return (DOCUMENT_STATUS.COMPLETED);
+		}
+
+		private List<DataSourceSequence<Integer>> tokenize(DataSourceSequence utteranceSeq) {
+			List<DataSourceSequence<Integer>> result = new LinkedList<>();
+
+			if (utteranceSeq.getDataSource() instanceof STextualDS) {
+				STextualDS ds = (STextualDS) utteranceSeq.getDataSource();
+
+				String wholeText = ds.getText();
+
+				// TODO add actual tokenizer logic
+				int start = utteranceSeq.getStart().intValue();
+				for (int i = start + 1; i < utteranceSeq.getEnd().intValue(); i++) {
+					if (wholeText.charAt(i) == ' ') {
+						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+						newTokenSeq.setDataSource(ds);
+						newTokenSeq.setStart(start);
+						newTokenSeq.setEnd(i);
+						result.add(newTokenSeq);
+
+						start = i + 1;
+					}
+				}
+
+			}
+
+			return result;
 		}
 
 	}
@@ -120,11 +224,11 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 	// ===================================================
 	/**
 	 * <strong>OVERRIDE THIS METHOD FOR CUSTOMIZATION</strong> <br/>
-	 * This method is called by the pepper framework after initializing this
-	 * object and directly before start processing. Initializing means setting
-	 * properties {@link PepperModuleProperties}, setting temporary files,
-	 * resources etc. . returns false or throws an exception in case of
-	 * {@link PepperModule} instance is not ready for any reason.
+	 * This method is called by the pepper framework after initializing this object
+	 * and directly before start processing. Initializing means setting properties
+	 * {@link PepperModuleProperties}, setting temporary files, resources etc. .
+	 * returns false or throws an exception in case of {@link PepperModule} instance
+	 * is not ready for any reason.
 	 * 
 	 * @return false, {@link PepperModule} instance is not ready for any reason,
 	 *         true, else.
