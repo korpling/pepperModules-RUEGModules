@@ -22,6 +22,7 @@ import org.corpus_tools.salt.common.SDocumentGraph;
 import org.corpus_tools.salt.common.SMedialRelation;
 import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
+import org.corpus_tools.salt.common.STimeline;
 import org.corpus_tools.salt.common.STimelineRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SRelation;
@@ -114,12 +115,12 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 		public DOCUMENT_STATUS mapSDocument() {
 
 			SDocumentGraph g = getDocument().getDocumentGraph();
-			
+
 			// rename the speaker to "dipl"
-			if(!g.getTextualDSs().isEmpty()) {
+			if (!g.getTextualDSs().isEmpty()) {
 				g.getTextualDSs().get(0).setName("dipl");
 			}
-			
+
 			List<SToken> originalToken = new LinkedList<>(g.getTokens());
 			for (SToken utteranceToken : originalToken) {
 
@@ -194,6 +195,12 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 					g.removeNode(utteranceToken);
 				}
 			}
+			
+			// The timeline is invalid after removing all original token
+			STimeline existingTimeline = g.getTimeline();
+			if (existingTimeline != null) {
+				g.removeNode(existingTimeline);
+			}
 
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
@@ -209,7 +216,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 				// TODO add actual tokenizer logic
 				int start = utteranceSeq.getStart().intValue();
 				for (int i = start + 1; i < utteranceSeq.getEnd().intValue(); i++) {
-					if (wholeText.charAt(i) == ' ') {
+					if (wholeText.charAt(i) == ' ' && start != i) {
 						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
 						newTokenSeq.setDataSource(ds);
 						newTokenSeq.setStart(start);
