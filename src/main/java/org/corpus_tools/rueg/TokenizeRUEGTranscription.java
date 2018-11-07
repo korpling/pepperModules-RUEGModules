@@ -223,12 +223,14 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 					// check if whitespace pattern matches from this start position
 					Matcher whitespace = whitespacePattern.matcher(wholeText.substring(i));
 					if(whitespace.matches()) {
-						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
-						newTokenSeq.setDataSource(ds);
-						newTokenSeq.setStart(tokenStart);
-						newTokenSeq.setEnd(i);
-						result.add(newTokenSeq);
-
+						// don't add empty tokens
+						if(tokenStart != i) {
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(tokenStart);
+							newTokenSeq.setEnd(i);
+							result.add(newTokenSeq);
+						}
 						// next token starts after the whitespace
 						tokenStart = i + whitespace.end(1);
 						i = tokenStart;
