@@ -23,7 +23,6 @@ import org.corpus_tools.salt.common.SMedialRelation;
 import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STimeline;
-import org.corpus_tools.salt.common.STimelineRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SRelation;
 import org.corpus_tools.salt.graph.Identifier;
