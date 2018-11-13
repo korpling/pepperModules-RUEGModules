@@ -37,30 +37,6 @@ public class TokenizeRUEGTranscriptionTest extends PepperManipulatorTest {
 		setFixture(new TokenizeRUEGTranscription());
 	}
 
-	/**
-	 * This is a test to check the correct work of our dummy implementation.
-	 * This test is supposed to show the usage of JUnit and to give some
-	 * impressions how to check simple things of the created salt model. <br/>
-	 * You can create as many test cases as you like, just create further
-	 * methods having the annotation "@Test". Note that it is very helpful, to
-	 * give them self explaining names and a short JavaDoc explaining their
-	 * purpose. This could help very much, when searching for bugs or extending
-	 * the tests. <br/>
-	 * In our case, we just test, if correct number of corpora and documents was
-	 * created, if all corpora have got a meta-annotation and if each
-	 * document-structure contains the right number of nodes and relations.
-	 */
-	@Test
-	public void test_DummyImplementation() {
-		// create a sample corpus, the class SampleGenerator provides a bunch of
-		// helpful methods to create sample documents and corpora
-		getFixture().setSaltProject(SampleGenerator.createSaltProject());
-		// starts the Pepper framework and the conversion process
-		start();
-
-		
-	}
-
 	// TODO add further tests for any test cases you can think of and which are
 	// necessary
 }

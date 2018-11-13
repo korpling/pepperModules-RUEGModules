@@ -206,7 +206,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
-		private final Pattern whitespacePattern = Pattern.compile("^([ \t\n]+).*");
+		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(\\S+).*");
 
 		private List<DataSourceSequence<Integer>> tokenize(DataSourceSequence utteranceSeq) {
 			List<DataSourceSequence<Integer>> result = new LinkedList<>();
@@ -216,24 +216,17 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 				String wholeText = ds.getText();
 
-				// TODO add actual tokenizer logic
-				int tokenStart = utteranceSeq.getStart().intValue();
-				for (int i = tokenStart; i < utteranceSeq.getEnd().intValue(); i++) {
+				for (int i = utteranceSeq.getStart().intValue(); i < utteranceSeq.getEnd().intValue(); i++) {
 
-					// check if whitespace pattern matches from this start position
-					Matcher whitespace = whitespacePattern.matcher(wholeText.substring(i));
-					if(whitespace.matches()) {
-						// don't add empty tokens
-						if(tokenStart != i) {
-							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
-							newTokenSeq.setDataSource(ds);
-							newTokenSeq.setStart(tokenStart);
-							newTokenSeq.setEnd(i);
-							result.add(newTokenSeq);
-						}
-						// next token starts after the whitespace
-						tokenStart = i + whitespace.end(1);
-						i = tokenStart;
+					// check if token pattern matches from this start position
+					Matcher nonWhitespace = nonWhiteSpacePattern.matcher(wholeText.substring(i));
+					if(nonWhitespace.matches()) {	
+						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+						newTokenSeq.setDataSource(ds);
+						newTokenSeq.setStart(i);
+						newTokenSeq.setEnd(i+nonWhitespace.end(1));
+						result.add(newTokenSeq);
+						i = i + nonWhitespace.end(1)-1;
 					}
 				}
 
