@@ -196,7 +196,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 					g.removeNode(utteranceToken);
 				}
 			}
-			
+
 			// The timeline is invalid after removing all original token
 			STimeline existingTimeline = g.getTimeline();
 			if (existingTimeline != null) {
@@ -218,15 +218,46 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 				for (int i = utteranceSeq.getStart().intValue(); i < utteranceSeq.getEnd().intValue(); i++) {
 
-					// check if token pattern matches from this start position
-					Matcher nonWhitespace = nonWhiteSpacePattern.matcher(wholeText.substring(i));
-					if(nonWhitespace.matches()) {	
-						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
-						newTokenSeq.setDataSource(ds);
-						newTokenSeq.setStart(i);
-						newTokenSeq.setEnd(i+nonWhitespace.end(1));
-						result.add(newTokenSeq);
-						i = i + nonWhitespace.end(1)-1;
+					if (wholeText.charAt(i) == '(') {
+						// Special treatment for parenthesis:
+						// a parenthesis always start a new continuous token from this position to the
+						// closing parenthesis.
+						int counter = 1;
+						int tokenStart = i;
+						while (counter > 0 && i < utteranceSeq.getEnd().intValue()) {
+							i++;
+							if (wholeText.charAt(i) == '(') {
+								// more opening parenthesis
+								counter++;
+							} else if (wholeText.charAt(i) == ')') {
+								counter--;
+							}
+						}
+						
+						// don't add empty token
+						if (tokenStart != i) {
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(tokenStart);
+							newTokenSeq.setEnd(i+1);
+							result.add(newTokenSeq);
+						}
+						// go to next character
+						i++;
+
+					} else {
+
+						// check if token pattern matches from this start position
+						Matcher nonWhitespace = nonWhiteSpacePattern.matcher(wholeText.substring(i));
+						if (nonWhitespace.matches()) {
+							int tokenEndExclusive = i + nonWhitespace.end(1);
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(i);
+							newTokenSeq.setEnd(tokenEndExclusive);
+							result.add(newTokenSeq);
+							i = tokenEndExclusive;
+						}
 					}
 				}
 
