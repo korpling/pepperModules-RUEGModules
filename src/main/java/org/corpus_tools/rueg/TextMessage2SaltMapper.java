@@ -50,7 +50,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	
 	private void extract(String message) {
 		SDocumentGraph graph = getDocument().getDocumentGraph();
-		String timestamp = message.substring(0, 16);
+		String timestamp = message.substring(0, 15);
 		String text = message.substring( 18 ).trim();
 		STextualDS textualDS = graph.createTextualDS( dropSpeaker(text) );
 		List<SToken> tokens = textualDS.tokenize();
