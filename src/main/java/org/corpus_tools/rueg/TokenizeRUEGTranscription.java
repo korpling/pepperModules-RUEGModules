@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.common.PepperConfiguration;
@@ -23,7 +25,6 @@ import org.corpus_tools.salt.common.SMedialRelation;
 import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STimeline;
-import org.corpus_tools.salt.common.STimelineRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SRelation;
 import org.corpus_tools.salt.graph.Identifier;
@@ -195,7 +196,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 					g.removeNode(utteranceToken);
 				}
 			}
-			
+
 			// The timeline is invalid after removing all original token
 			STimeline existingTimeline = g.getTimeline();
 			if (existingTimeline != null) {
@@ -205,6 +206,8 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
+		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(\\S+).*");
+
 		private List<DataSourceSequence<Integer>> tokenize(DataSourceSequence utteranceSeq) {
 			List<DataSourceSequence<Integer>> result = new LinkedList<>();
 
@@ -213,17 +216,48 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 				String wholeText = ds.getText();
 
-				// TODO add actual tokenizer logic
-				int start = utteranceSeq.getStart().intValue();
-				for (int i = start + 1; i < utteranceSeq.getEnd().intValue(); i++) {
-					if (wholeText.charAt(i) == ' ' && start != i) {
-						DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
-						newTokenSeq.setDataSource(ds);
-						newTokenSeq.setStart(start);
-						newTokenSeq.setEnd(i);
-						result.add(newTokenSeq);
+				for (int i = utteranceSeq.getStart().intValue(); i < utteranceSeq.getEnd().intValue(); i++) {
 
-						start = i + 1;
+					if (wholeText.charAt(i) == '(') {
+						// Special treatment for parenthesis:
+						// a parenthesis always start a new continuous token from this position to the
+						// closing parenthesis.
+						int counter = 1;
+						int tokenStart = i;
+						while (counter > 0 && i < utteranceSeq.getEnd().intValue()) {
+							i++;
+							if (wholeText.charAt(i) == '(') {
+								// more opening parenthesis
+								counter++;
+							} else if (wholeText.charAt(i) == ')') {
+								counter--;
+							}
+						}
+						
+						// don't add empty token
+						if (tokenStart != i) {
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(tokenStart);
+							newTokenSeq.setEnd(i+1);
+							result.add(newTokenSeq);
+						}
+						// go to next character
+						i++;
+
+					} else {
+
+						// check if token pattern matches from this start position
+						Matcher nonWhitespace = nonWhiteSpacePattern.matcher(wholeText.substring(i));
+						if (nonWhitespace.matches()) {
+							int tokenEndExclusive = i + nonWhitespace.end(1);
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(i);
+							newTokenSeq.setEnd(tokenEndExclusive);
+							result.add(newTokenSeq);
+							i = tokenEndExclusive;
+						}
 					}
 				}
 
