@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMapper {
 	private static final Logger logger = LoggerFactory.getLogger(TextMessage2SaltMapper.class);
+	private static final String ANNO_NAME_MESSAGE = "message";
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {
 		if (getDocument() == null) {
@@ -55,7 +56,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		STextualDS textualDS = graph.createTextualDS( dropSpeaker(text) );
 		List<SToken> tokens = textualDS.tokenize();
 		if (((TextMessageImporterProperties) getProperties()).annotateTimeStamps()) {
-			graph.createSpan(tokens).createAnnotation(null, "timestamp", timestamp);
+			graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_MESSAGE, timestamp);
 		}
 	}
 	
