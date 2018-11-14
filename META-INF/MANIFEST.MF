@@ -1,12 +1,12 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1540802643710
-Build-Jdk: 1.8.0_181
-Built-By: thomas
+Bnd-LastModified: 1542218511136
+Build-Jdk: 1.8.0_111
+Built-By: klotzmaz
 Bundle-Description: Provides shared POM-data.
 Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
 Bundle-ManifestVersion: 2
 Bundle-Name: pepperModules-RUEGModules
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-SymbolicName: org.corpus-tools.pepperModules-RUEGModules;singleto
  n:=true
 Bundle-Vendor: Humboldt-Universität zu Berlin
@@ -22,9 +22,11 @@ Import-Package: org.corpus_tools.pepper.common;version="[3.2,4)",org.cor
  [3.2,4)",org.corpus_tools.salt;version="[3.3,4)",org.corpus_tools.salt.
  common;version="[3.3,4)",org.corpus_tools.salt.core;version="[3.3,4)",o
  rg.corpus_tools.salt.graph;version="[3.3,4)",org.corpus_tools.salt.util
- ;version="[3.3,4)",org.eclipse.emf.common.util
-META-INF: /home/thomas/src/pepperModules/RUEGModules/META-INF
+ ;version="[3.3,4)",org.eclipse.emf.common.util,org.slf4j;version="[1.7,
+ 2)"
+META-INF: /home/klotzmaz/eclipse-workspace/pepperModules-RUEGModules/MET
+ A-INF
 OSGI-INF: OSGI-INF
-Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.7))"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
 Service-Component: OSGI-INF/service-component/*.xml
 Tool: Bnd-2.3.0.201405100607
