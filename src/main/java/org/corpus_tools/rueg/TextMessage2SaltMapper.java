@@ -3,18 +3,22 @@ package org.corpus_tools.rueg;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.assertj.core.api.ByteArrayAssert;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.PepperMapper;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
 import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SDocumentGraph;
+import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
@@ -26,6 +30,8 @@ import org.slf4j.LoggerFactory;
 public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMapper {
 	private static final Logger logger = LoggerFactory.getLogger(TextMessage2SaltMapper.class);
 	private static final String ANNO_NAME_MESSAGE = "message";
+	private static final String ANNO_NAME_LINE = "line";
+	private static final String NEW_MSG_PATTERN = "[0-9][0-9]\\.[0-9][0-9]\\.[0-9][0-9], [0-9][0-9]:[0-9][0-9] - ";
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {
 		if (getDocument() == null) {
@@ -44,20 +50,20 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	}
 	
 	private void read() throws IOException {
-		Stream<String> data = Files.lines( Paths.get( getResourceURI().toFileString() ));
-		data.forEachOrdered(this::extract);
-		data.close();
-	}
-	
-	private void extract(String message) {
+		byte[] data = Files.readAllBytes( Paths.get( getResourceURI().toFileString() ));
+		String text = new String(data);
 		SDocumentGraph graph = getDocument().getDocumentGraph();
-		String timestamp = message.substring(0, 15);
-		String text = message.substring( 18 ).trim();
-		if (hasSpeaker(text)) {
-			STextualDS textualDS = graph.createTextualDS( dropSpeaker(text) );
-			List<SToken> tokens = textualDS.tokenize();
-			if (((TextMessageImporterProperties) getProperties()).annotateTimeStamps()) {
-				graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_MESSAGE, timestamp);
+		List<SToken> messageTokens = new ArrayList<>();
+		for (String message : text.split(NEW_MSG_PATTERN)) {
+			if (hasSpeaker(message)) {
+				for (String line : dropSpeaker(message).split( "\n|\r" )) {
+					String messageText = line.trim();
+					List<SToken> tokens = graph.createTextualDS(messageText).tokenize();
+					messageTokens.addAll(tokens);
+					graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, "line");
+				}
+				graph.createSpan(messageTokens).createAnnotation(null, ANNO_NAME_MESSAGE, "message");  //TODO use time stamp instead
+				messageTokens.clear();
 			}
 		}
 	}
