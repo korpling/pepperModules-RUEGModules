@@ -54,16 +54,23 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		String text = new String(data);
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		List<SToken> messageTokens = new ArrayList<>();
+		int m = 1;
 		for (String message : text.split(NEW_MSG_PATTERN)) {
 			if (hasSpeaker(message)) {
-				for (String line : dropSpeaker(message).split( "\n|\r" )) {
+				int l = 1;
+				for (String line : dropSpeaker(message).split( "\n|\r" )) {					
 					String messageText = line.trim();
-					List<SToken> tokens = graph.createTextualDS(messageText).tokenize();
-					messageTokens.addAll(tokens);
-					graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, "line");
+					if (!messageText.isEmpty()) {
+						System.out.println(messageText);
+						List<SToken> tokens = graph.createTextualDS(messageText).tokenize();
+						messageTokens.addAll(tokens);
+						graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, Integer.toString(l++));
+					}
 				}
-				graph.createSpan(messageTokens).createAnnotation(null, ANNO_NAME_MESSAGE, "message");  //TODO use time stamp instead
-				messageTokens.clear();
+				if (!messageTokens.isEmpty()) {
+					graph.createSpan(messageTokens).createAnnotation(null, ANNO_NAME_MESSAGE, Integer.toString(m++));  //TODO use time stamp instead
+					messageTokens.clear();
+				}
 			}
 		}
 	}
