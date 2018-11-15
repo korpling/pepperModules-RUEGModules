@@ -20,7 +20,7 @@ public class TextMessageImporter extends PepperImporterImpl implements PepperImp
 		setSupplierHomepage(URI.createURI("https://github.com/korpling/pepperModules-RUEGModules"));
 		setDesc("This importer transforms text messenger exports (such as messages exported with and from WhatsApp) to a Salt model.");
 		// set list of formats supported by this module
-		addSupportedFormat("timestamped output", null, null);
+		addSupportedFormat("timestamped output", "0.0", null);
 		getDocumentEndings().add(FILE_ENDING);
 	}
 	
