@@ -53,21 +53,32 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		String timestamp = message.substring(0, 15);
 		String text = message.substring( 18 ).trim();
-		STextualDS textualDS = graph.createTextualDS( dropSpeaker(text) );
-		List<SToken> tokens = textualDS.tokenize();
-		if (((TextMessageImporterProperties) getProperties()).annotateTimeStamps()) {
-			graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_MESSAGE, timestamp);
+		if (hasSpeaker(text)) {
+			STextualDS textualDS = graph.createTextualDS( dropSpeaker(text) );
+			List<SToken> tokens = textualDS.tokenize();
+			if (((TextMessageImporterProperties) getProperties()).annotateTimeStamps()) {
+				graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_MESSAGE, timestamp);
+			}
 		}
 	}
 	
 	/** 
 	 * This function removes the messages "SPEAKER_NAME : "-prefix.
-	 * @param message
+	 * @param prefixedMessage
 	 * @return
 	 */
-	private String dropSpeaker(String message) {
-		String[] arr = message.split(":", 2);
-		return arr.length == 2? arr[1].trim() : arr[0];
+	private String dropSpeaker(String prefixedMessage) {
+		String[] arr = prefixedMessage.split(": ", 2);
+		return arr.length == 2? arr[1] : arr[0];
+	}
+	
+	/**
+	 * Determine whether the provided message is an internal message or has been authored by a user.
+	 * @param messageLine
+	 * @return
+	 */
+	private boolean hasSpeaker(String messageLine) {
+		return messageLine.contains(": ");
 	}
 	
 	private void unify() {
