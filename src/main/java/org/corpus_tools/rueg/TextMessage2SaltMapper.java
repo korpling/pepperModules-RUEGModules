@@ -61,7 +61,6 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 				for (String line : dropSpeaker(message).split( "\n|\r" )) {					
 					String messageText = line.trim();
 					if (!messageText.isEmpty()) {
-						System.out.println(messageText);
 						List<SToken> tokens = graph.createTextualDS(messageText).tokenize();
 						messageTokens.addAll(tokens);
 						graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, Integer.toString(l++));
