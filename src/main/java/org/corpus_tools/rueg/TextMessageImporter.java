@@ -25,7 +25,7 @@ public class TextMessageImporter extends PepperImporterImpl implements PepperImp
 	}
 	
 	/**
-	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}.
+	 * Creates a mapper of type {@link TextMessage2SaltMapper}.
 	 * {@inheritDoc PepperModule#createPepperMapper(Identifier)}
 	 */
 	@Override
