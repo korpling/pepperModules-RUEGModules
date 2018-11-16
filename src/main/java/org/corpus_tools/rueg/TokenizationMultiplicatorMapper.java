@@ -3,7 +3,6 @@ package org.corpus_tools.rueg;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
@@ -17,6 +16,11 @@ import org.corpus_tools.salt.common.STimelineRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SRelation;
 
+/** 
+ * This mapper simply multiplicates a tokenization to please the EXMARaLDA exporter. It is thus not a generally applicable tool (yet).
+ * @author klotzmaz
+ *
+ */
 public class TokenizationMultiplicatorMapper extends PepperMapperImpl implements PepperMapper {
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {
