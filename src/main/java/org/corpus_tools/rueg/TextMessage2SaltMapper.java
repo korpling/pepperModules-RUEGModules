@@ -41,19 +41,19 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 			getDocument().setDocumentGraph( SaltFactory.createSDocumentGraph() );
 		}
 		try {
-			read();
+			unify( read() );
 		} catch (IOException e) {
 			throw new PepperModuleDataException(this, e.getMessage(), e);
 		}
-		unify();
 		return (DOCUMENT_STATUS.COMPLETED);
 	}
 	
-	private void read() throws IOException {
+	private List<STextualDS> read() throws IOException {
 		byte[] data = Files.readAllBytes( Paths.get( getResourceURI().toFileString() ));
 		String text = new String(data);
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		List<SToken> messageTokens = new ArrayList<>();
+		List<STextualDS> orderedDataSources = new ArrayList<>();
 		int m = 1;
 		for (String message : text.split(NEW_MSG_PATTERN)) {
 			if (hasSpeaker(message)) {
@@ -61,7 +61,9 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 				for (String line : dropSpeaker(message).split( "\n|\r" )) {					
 					String messageText = line.trim();
 					if (!messageText.isEmpty()) {
-						List<SToken> tokens = graph.createTextualDS(messageText).tokenize();
+						STextualDS ds = graph.createTextualDS(messageText);
+						orderedDataSources.add(ds);
+						List<SToken> tokens = ds.tokenize();
 						messageTokens.addAll(tokens);
 						graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, Integer.toString(l++));
 					}
@@ -72,6 +74,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 				}
 			}
 		}
+		return orderedDataSources;
 	}
 	
 	/** 
@@ -93,21 +96,19 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		return messageLine.contains(": ");
 	}
 	
-	private void unify() {
+	private void unify(List<STextualDS> orderedDataSources) {
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		List<STextualDS> datasources = graph.getTextualDSs();	
 		String fullText = String.join(" ", datasources.stream().map((STextualDS ds) -> ds.getText()).collect(Collectors.toList()));
 		STextualDS targetDS = SaltFactory.createSTextualDS();
 		targetDS.setText(fullText);
 		int offset = 0;
-		Set<STextualDS> removableNodes = new HashSet<>();
-		for (STextualDS ds : datasources) {
+		for (STextualDS ds : orderedDataSources) {
 			final int o = offset;
 			graph.getTokensBySequence(new DataSourceSequence<Integer>(ds, 0, ds.getEnd())).stream().forEach((SToken t) -> reassignToken(t, targetDS, o));
 			offset += 1 + ds.getText().length();
-			removableNodes.add(ds);
 		}
-		removableNodes.stream().forEach(graph::removeNode);
+		orderedDataSources.stream().forEach(graph::removeNode);
 		graph.addNode(targetDS);
 	}
 	
