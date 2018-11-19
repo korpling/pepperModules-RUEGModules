@@ -35,7 +35,9 @@ public class TokenizationMultiplicatorMapper extends PepperMapperImpl implements
 			datasourceByName.put(modelName, graph.getTextualDSs().get(0));
 			String text = datasourceByName.get(modelName).getText();
 			for (String name : names) {
-				datasourceByName.put(name, graph.createTextualDS( text ));
+				STextualDS ds =  graph.createTextualDS(text);
+				ds.setName(name);
+				datasourceByName.put(name, ds);
 			}
 			for (String name : datasourceByName.keySet()) {
 				datasourceByName.get(name).createFeature("exmaralda", "speaker", name);
