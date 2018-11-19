@@ -62,6 +62,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 					String messageText = line.trim();
 					if (!messageText.isEmpty()) {
 						STextualDS ds = graph.createTextualDS(messageText);
+						ds.setName("dipl");
 						orderedDataSources.add(ds);
 						List<SToken> tokens = ds.tokenize();
 						messageTokens.addAll(tokens);
@@ -101,6 +102,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		List<STextualDS> datasources = graph.getTextualDSs();	
 		String fullText = String.join(" ", datasources.stream().map((STextualDS ds) -> ds.getText()).collect(Collectors.toList()));
 		STextualDS targetDS = SaltFactory.createSTextualDS();
+		targetDS.setName("dipl");
 		targetDS.setText(fullText);
 		int offset = 0;
 		for (STextualDS ds : orderedDataSources) {
