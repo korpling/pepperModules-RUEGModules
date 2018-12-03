@@ -51,6 +51,11 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	private List<STextualDS> read() throws IOException {
 		byte[] data = Files.readAllBytes( Paths.get( getResourceURI().toFileString() ));
 		String text = new String(data);
+		
+		// make sure that Emojis are seperated by space, otherwise the tokenizer will not work
+		text = text.replaceAll("([^ ])([\\x{1F600}-\\x{1F64F}])", "$1 $2");
+		text = text.replaceAll("([\\x{1F600}-\\x{1F64F}])([^ ])", "$1 $2");
+		
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		List<SToken> messageTokens = new ArrayList<>();
 		List<STextualDS> orderedDataSources = new ArrayList<>();
@@ -80,7 +85,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	
 	/** 
 	 * This function removes the messages "SPEAKER_NAME : "-prefix.
-	 * @param prefixedMessage
+	 * @param prefixedMessage[\u1F600-\u1F64F]
 	 * @return
 	 */
 	private String dropSpeaker(String prefixedMessage) {
