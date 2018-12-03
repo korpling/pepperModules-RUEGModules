@@ -144,11 +144,11 @@ public class TokenizationMultiplicatorMapper extends PepperMapperImpl implements
 
 	public static STimelineRelation getTimelineRelationByToken(SToken tok) {
 		return (STimelineRelation) tok.getOutRelations().stream()
-				.filter((SRelation r) -> r instanceof STimelineRelation).findFirst().orElse(null);
+				.filter((SRelation r) -> r instanceof STimelineRelation).findFirst().get();
 	}
 	
 	public static SMedialRelation getMedialRelation(SToken tok) {
 		return (SMedialRelation) tok.getOutRelations().stream()
-				.filter((SRelation r) -> r instanceof SMedialRelation).findFirst().get();
+				.filter((SRelation r) -> r instanceof SMedialRelation).findFirst().orElse(null);
 	}
 }
