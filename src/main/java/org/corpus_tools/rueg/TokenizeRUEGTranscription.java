@@ -218,28 +218,44 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 
 				for (int i = utteranceSeq.getStart().intValue(); i < utteranceSeq.getEnd().intValue(); i++) {
 
-					if (wholeText.charAt(i) == '(') {
+					char c = wholeText.charAt(i);
+					if (c == '(' || c == '[' || c == '{') {
 						// Special treatment for parenthesis:
 						// a parenthesis always start a new continuous token from this position to the
 						// closing parenthesis.
+
+						char startCharacter = c;
+						char endCharacter = c;
+						switch (startCharacter) {
+						case '(':
+							endCharacter = ')';
+							break;
+						case '[':
+							endCharacter = ']';
+							break;
+						case '{':
+							endCharacter = '}';
+							break;
+						}
+
 						int counter = 1;
 						int tokenStart = i;
 						while (counter > 0 && i < utteranceSeq.getEnd().intValue()) {
 							i++;
-							if (wholeText.charAt(i) == '(') {
+							if (wholeText.charAt(i) == startCharacter) {
 								// more opening parenthesis
 								counter++;
-							} else if (wholeText.charAt(i) == ')') {
+							} else if (wholeText.charAt(i) == endCharacter) {
 								counter--;
 							}
 						}
-						
+
 						// don't add empty token
 						if (tokenStart != i) {
 							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
 							newTokenSeq.setDataSource(ds);
 							newTokenSeq.setStart(tokenStart);
-							newTokenSeq.setEnd(i+1);
+							newTokenSeq.setEnd(i + 1);
 							result.add(newTokenSeq);
 						}
 						// go to next character
