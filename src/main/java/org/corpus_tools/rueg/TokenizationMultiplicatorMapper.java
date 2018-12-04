@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
@@ -33,6 +35,31 @@ public class TokenizationMultiplicatorMapper extends PepperMapperImpl implements
 	public DOCUMENT_STATUS mapSDocument() {
 		List<String> names = ((TokenizationMultiplicatorProperties) getProperties()).getTokenizationNames();
 		SDocumentGraph graph = getDocument().getDocumentGraph();
+		
+		
+		// annotate the existing token with the language code
+		if(((TokenizationMultiplicatorProperties) getProperties()).isAddLanguage()) {
+			String languageCode = "<UNKNOWN>";
+			if(getDocument().getName() != null) {
+				Pattern p = Pattern.compile(".*_..(?<L>[DGTER])$");
+				Matcher m = p.matcher(getDocument().getName());
+				if(m.matches()) {
+					switch(m.group("L")) {
+					case "D": languageCode = "deu"; break;
+					case "G": languageCode = "gre"; break;
+					case "T": languageCode = "tur"; break;
+					case "E": languageCode = "eng"; break;
+					case "R": languageCode = "rus"; break;
+					}
+				}
+			}
+			for(SToken tok : graph.getTokens()) {
+				if(tok.getAnnotation("language") == null) {
+					tok.createAnnotation(null, "language", languageCode);
+				}
+			}
+		}
+		
 		Map<String, SToken> previousTokenByName = new HashMap<>();
 		Map<String, STextualDS> datasourceByName = new HashMap<>();
 		String modelName = names.get(0);
@@ -83,6 +110,7 @@ public class TokenizationMultiplicatorMapper extends PepperMapperImpl implements
 						graph.addRelation(mediaRel);
 					}
 				}
+				
 			}
 		}
 		return DOCUMENT_STATUS.COMPLETED;
