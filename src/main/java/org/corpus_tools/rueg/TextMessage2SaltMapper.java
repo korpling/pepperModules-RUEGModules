@@ -4,14 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.BinaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.assertj.core.api.ByteArrayAssert;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.PepperMapper;
@@ -51,27 +48,24 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	private List<STextualDS> read() throws IOException {
 		byte[] data = Files.readAllBytes( Paths.get( getResourceURI().toFileString() ));
 		String text = new String(data);
-		
-		// make sure that Emojis are seperated by space, otherwise the tokenizer will not work
-		text = text.replaceAll("([^ ])([\\x{1F600}-\\x{1F64F}])", "$1 $2");
-		text = text.replaceAll("([\\x{1F600}-\\x{1F64F}])([^ ])", "$1 $2");
-		
+				
 		SDocumentGraph graph = getDocument().getDocumentGraph();
 		List<SToken> messageTokens = new ArrayList<>();
 		List<STextualDS> orderedDataSources = new ArrayList<>();
 		int m = 1;
 		for (String message : text.split(NEW_MSG_PATTERN)) {
 			if (hasSpeaker(message)) {
-				int l = 1;
 				for (String line : dropSpeaker(message).split( "\n|\r" )) {					
 					String messageText = line.trim();
 					if (!messageText.isEmpty()) {
-						STextualDS ds = graph.createTextualDS(messageText);
+						String rawText = messageText;
+						STextualDS ds = graph.createTextualDS( freeEmojis(messageText) );
 						ds.setName("dipl");
 						orderedDataSources.add(ds);
 						List<SToken> tokens = ds.tokenize();
 						messageTokens.addAll(tokens);
-						graph.createSpan(tokens).createAnnotation(null, ANNO_NAME_LINE, Integer.toString(l++));
+						SSpan span = graph.createSpan(tokens);
+						span.createAnnotation(null, ANNO_NAME_LINE, rawText);
 					}
 				}
 				if (!messageTokens.isEmpty()) {
@@ -81,6 +75,19 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 			}
 		}
 		return orderedDataSources;
+	}
+	
+	private static final String EMOJI_RANGE = "[\\x{1F600}-\\x{1F64F}]";
+	
+	/** 
+	 * Separates emojis from other text with a space. 
+	 * @param text
+	 * @return
+	 */
+	private String freeEmojis(String text) {
+		return text
+				.replaceAll("([^ ])(" + EMOJI_RANGE + ")", "$1 $2")
+				.replaceAll("(" + EMOJI_RANGE + ")([^ ])", "$1 $2");
 	}
 	
 	/** 
