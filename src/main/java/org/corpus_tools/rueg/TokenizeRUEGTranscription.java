@@ -206,7 +206,27 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
-		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(\\S+).*");
+		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(?<token>(\\S+)).*");
+
+		private boolean checkLookahead(String wholeText, int rangeStart, int rangeEnd, String searchText) {
+
+			if (rangeStart + searchText.length() > rangeEnd) {
+				// Cannot match the text if the the search does not fit in the rest of the whole
+				// text
+				return false;
+			}
+
+			// check if all characters match
+			for (int i = 0; i < searchText.length() && rangeStart + i < wholeText.length()
+					&& rangeStart + i < rangeEnd; i++) {
+				if (wholeText.charAt(rangeStart + i) != searchText.charAt(i)) {
+					// mismatch, return false
+					return false;
+				}
+			}
+			// no mismatch found, the prefix can be matched
+			return true;
+		}
 
 		private List<DataSourceSequence<Integer>> tokenize(DataSourceSequence utteranceSeq) {
 			List<DataSourceSequence<Integer>> result = new LinkedList<>();
@@ -261,12 +281,34 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 						// go to next character
 						i++;
 
+					} else if(checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "<Q>")) {
+						// find closing tag and make the whole range a single token
+						int tokenStart = i;
+						i += 3;
+						while(i < utteranceSeq.getEnd().intValue()) {
+							if(checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "</Q>")) {
+								i += 4;
+								break;
+							} else {
+								i++;
+							}							
+						}
+						// don't add empty token
+						if (tokenStart != i) {
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(tokenStart);
+							newTokenSeq.setEnd(i + 1);
+							result.add(newTokenSeq);
+						}
+						// go to next character
+						i++;
 					} else {
 
 						// check if token pattern matches from this start position
 						Matcher nonWhitespace = nonWhiteSpacePattern.matcher(wholeText.substring(i));
 						if (nonWhitespace.matches()) {
-							int tokenEndExclusive = i + nonWhitespace.end(1);
+							int tokenEndExclusive = i + nonWhitespace.end("token");
 							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
 							newTokenSeq.setDataSource(ds);
 							newTokenSeq.setStart(i);
