@@ -3,6 +3,7 @@ package org.corpus_tools.rueg;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -131,14 +132,9 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 				if (!utteranceSeqList.isEmpty()) {
 					// tokenize the token value (by getting new indexes for the token based on
 					// the same base text)
-					List<DataSourceSequence<Integer>> tokenizedUtterance = this.tokenize(utteranceSeqList.get(0));
+					TreeMap<Integer, SToken> sortedTokenForUtterance = this.tokenize(utteranceSeqList.get(0), g);
 
 					// add token and connect them with a newly created span
-					TreeMap<Integer, SToken> sortedTokenForUtterance = new TreeMap<>();
-					for (DataSourceSequence tokenSeq : tokenizedUtterance) {
-						SToken newToken = g.createToken(tokenSeq);
-						sortedTokenForUtterance.put(tokenSeq.getStart().intValue(), newToken);
-					}
 					List<SToken> tokenForUtterance = new ArrayList<>(sortedTokenForUtterance.values());
 
 					SSpan utteranceSpan = g.createSpan(tokenForUtterance);
@@ -206,7 +202,8 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 			return (DOCUMENT_STATUS.COMPLETED);
 		}
 
-		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(?<token>(\\S+)).*");
+		private final Pattern nonWhiteSpacePattern = Pattern.compile("^(?<token>([^ \t\\]]+)).*");
+		private final Pattern nvNamePattern = Pattern.compile("^(?<prefix>\\[\\[(?<text>[^\\]]+)\\])[ ]*.+");
 
 		private boolean checkLookahead(String wholeText, int rangeStart, int rangeEnd, String searchText) {
 
@@ -228,18 +225,71 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 			return true;
 		}
 
-		private List<DataSourceSequence<Integer>> tokenize(DataSourceSequence utteranceSeq) {
-			List<DataSourceSequence<Integer>> result = new LinkedList<>();
+		private TreeMap<Integer, SToken> tokenize(DataSourceSequence utteranceSeq, SDocumentGraph g) {
+			TreeMap<Integer, SToken> result = new TreeMap<>();
 
 			if (utteranceSeq.getDataSource() instanceof STextualDS) {
 				STextualDS ds = (STextualDS) utteranceSeq.getDataSource();
 
 				String wholeText = ds.getText();
 
+				final List<SToken> nvSpan = new LinkedList<>();
+				Optional<String> nvSpanText = Optional.empty();
+
 				for (int i = utteranceSeq.getStart().intValue(); i < utteranceSeq.getEnd().intValue(); i++) {
 
 					char c = wholeText.charAt(i);
-					if (c == '(' || c == '[' || c == '{') {
+					if (checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "<Q>")) {
+						// find closing tag and make the whole range a single token
+						int tokenStart = i;
+						i += 3;
+						while (i < utteranceSeq.getEnd().intValue()) {
+							if (checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "</Q>")) {
+								i += 4;
+								break;
+							} else {
+								i++;
+							}
+						}
+						// don't add empty token
+						if (tokenStart != i) {
+							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
+							newTokenSeq.setDataSource(ds);
+							newTokenSeq.setStart(tokenStart);
+							newTokenSeq.setEnd(i + 1);
+
+							SToken newToken = g.createToken(newTokenSeq);
+							result.put(newTokenSeq.getStart().intValue(), newToken);
+
+							if (nvSpanText.isPresent()) {
+								nvSpan.add(newToken);
+							}
+						}
+						// go to next character
+						i++;
+					} else if (checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "[[")) {
+						// begin a new span
+						nvSpan.clear();
+						// the next token is the value for the nv span
+						Matcher m = nvNamePattern.matcher(wholeText.substring(i));
+						if (m.matches()) {
+							nvSpanText = Optional.of(m.group("text"));
+							i += m.end("prefix") - 1;
+						} else {
+							nvSpanText = Optional.of("<UNKNOWN>");
+							i += 2;
+						}
+
+					} else if (nvSpanText.isPresent() && c == ']') {
+						// end of nv span
+						if (!nvSpan.isEmpty()) {
+							SSpan span = g.createSpan(nvSpan);
+							span.createAnnotation(null, "nv", nvSpanText.get());
+							nvSpan.clear();
+						}
+						nvSpanText = Optional.empty();
+						i++;
+					} else if (c == '(' || c == '[' || c == '{') {
 						// Special treatment for parenthesis:
 						// a parenthesis always start a new continuous token from this position to the
 						// closing parenthesis.
@@ -276,33 +326,22 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 							newTokenSeq.setDataSource(ds);
 							newTokenSeq.setStart(tokenStart);
 							newTokenSeq.setEnd(i + 1);
-							result.add(newTokenSeq);
+
+							SToken newToken = g.createToken(newTokenSeq);
+							result.put(newTokenSeq.getStart().intValue(), newToken);
+							
+							if(startCharacter == '[') {
+								SSpan span = g.createSpan(newToken);
+								span.createAnnotation(null, "nv", wholeText.substring(tokenStart+1, i));
+							}
+							
+							if (nvSpanText.isPresent()) {
+								nvSpan.add(newToken);
+							}
 						}
 						// go to next character
 						i++;
 
-					} else if(checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "<Q>")) {
-						// find closing tag and make the whole range a single token
-						int tokenStart = i;
-						i += 3;
-						while(i < utteranceSeq.getEnd().intValue()) {
-							if(checkLookahead(wholeText, i, utteranceSeq.getEnd().intValue(), "</Q>")) {
-								i += 4;
-								break;
-							} else {
-								i++;
-							}							
-						}
-						// don't add empty token
-						if (tokenStart != i) {
-							DataSourceSequence<Integer> newTokenSeq = new DataSourceSequence<>();
-							newTokenSeq.setDataSource(ds);
-							newTokenSeq.setStart(tokenStart);
-							newTokenSeq.setEnd(i + 1);
-							result.add(newTokenSeq);
-						}
-						// go to next character
-						i++;
 					} else {
 
 						// check if token pattern matches from this start position
@@ -313,12 +352,24 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 							newTokenSeq.setDataSource(ds);
 							newTokenSeq.setStart(i);
 							newTokenSeq.setEnd(tokenEndExclusive);
-							result.add(newTokenSeq);
+
+							SToken newToken = g.createToken(newTokenSeq);
+							result.put(newTokenSeq.getStart().intValue(), newToken);
+
+							if (nvSpanText.isPresent()) {
+								nvSpan.add(newToken);
+							}
+
 							i = tokenEndExclusive;
 						}
 					}
 				}
-
+				// end of nv span because CU ended
+				if (!nvSpan.isEmpty()) {
+					SSpan span = g.createSpan(nvSpan);
+					span.createAnnotation(null, "nv", nvSpanText.get());
+					nvSpan.clear();
+				}
 			}
 
 			return result;
