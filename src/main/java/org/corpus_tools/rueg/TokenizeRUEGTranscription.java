@@ -289,7 +289,7 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 						}
 						nvSpanText = Optional.empty();
 						i++;
-					} else if (c == '(' || c == '[' || c == '{') {
+					} else if (c == '(' || c == '[') {
 						// Special treatment for parenthesis:
 						// a parenthesis always start a new continuous token from this position to the
 						// closing parenthesis.
@@ -302,9 +302,6 @@ public class TokenizeRUEGTranscription extends PepperManipulatorImpl {
 							break;
 						case '[':
 							endCharacter = ']';
-							break;
-						case '{':
-							endCharacter = '}';
 							break;
 						}
 
