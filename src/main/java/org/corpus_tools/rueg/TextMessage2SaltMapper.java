@@ -45,7 +45,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 	private static final Logger logger = LoggerFactory.getLogger(TextMessage2SaltMapper.class);
 	private static final String ANNO_NAME_MESSAGE = "message";
 	private static final String ANNO_NAME_LINE = "line";
-	private static final String NEW_MSG_PATTERN = "[0-9][0-9]\\.[0-9][0-9]\\.[0-9][0-9], [0-9][0-9]:[0-9][0-9] - ";
+	private static final String NEW_MSG_PATTERN = "[0-9][0-9]?(\\.|/)[0-9][0-9]?(\\.|/)[0-9][0-9], [0-9][0-9]:[0-9][0-9] - ";
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {
 		if (getDocument() == null) {
