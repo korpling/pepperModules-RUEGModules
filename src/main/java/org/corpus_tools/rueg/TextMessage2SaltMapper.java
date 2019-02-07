@@ -72,7 +72,7 @@ public class TextMessage2SaltMapper extends PepperMapperImpl implements PepperMa
 		int m = 1;
 		for (String message : text.split(NEW_MSG_PATTERN)) {
 			if (hasSpeaker(message)) {
-				for (String line : dropSpeaker(message).split( "\n|\r|(\r\n)" )) {					
+				for (String line : dropSpeaker(message).split( "\n|\r" )) {					
 					String messageText = line.trim();
 					if (!messageText.isEmpty()) {
 						String rawText = messageText;
